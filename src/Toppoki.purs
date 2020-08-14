@@ -18,7 +18,13 @@ import Unsafe.Coerce (unsafeCoerce)
 foreign import data Puppeteer :: Type
 foreign import data Browser :: Type
 foreign import data Page :: Type
+foreign import data Frame :: Type
 foreign import data ElementHandle :: Type
+
+class HasFrame a
+
+instance pageFrame :: HasFrame Page
+instance frameFrame :: HasFrame Frame
 
 newtype URL = URL String
 derive instance newtypeURL :: Newtype URL _
@@ -139,20 +145,21 @@ onPageError = EU.runEffectFn3 _on "pageerror"
 onLoad :: EU.EffectFn1 Unit Unit -> Page -> Effect Unit
 onLoad = EU.runEffectFn3 _on "load"
 
-pageWaitForSelector
-  :: forall options trash
+waitForSelector
+  :: forall frame options trash
    . Row.Union options trash
        ( visible :: Boolean
        , hidden :: Boolean
        , timeout :: Int
        )
+  => HasFrame frame
   => Selector
   -> { | options }
-  -> Page
+  -> frame
   -> Aff ElementHandle
-pageWaitForSelector = runPromiseAffE3 _pageWaitForSelector
+waitForSelector = runPromiseAffE3 _waitForSelector
 
-focus :: Selector -> Page -> Aff Unit
+focus :: forall page. HasFrame page => Selector -> page -> Aff Unit
 focus = runPromiseAffE2 _focus
 
 
@@ -176,8 +183,11 @@ type_
   -> Aff Unit
 type_ = runPromiseAffE4 _type
 
-click :: Selector -> Page -> Aff Unit
+click :: forall page. HasFrame page => Selector -> page -> Aff Unit
 click = runPromiseAffE2 _click
+
+contentFrame :: ElementHandle -> Aff Frame
+contentFrame = runPromiseAffE1 _contentFrame
 
 foreign import data WaitUntilOption :: Type
 
@@ -271,13 +281,15 @@ keyboardSendCharacter = runPromiseAffE2 _keyboardSendCharacter
 
 -- | Sends a keydown, keypress/input, and keyup event for each character in the text.
 -- | To press a special key, like Control or ArrowDown, use keyboard.press.
-keyboardType :: forall options trash
+keyboardType :: forall options trash page
               . Row.Union options trash ( delay :: Number )
-             => String
+             => HasFrame page
+             => Selector
+             -> String
              -> { | options }
-             -> Page
+             -> page
              -> Aff Unit
-keyboardType = runPromiseAffE3 _keyboardType
+keyboardType = runPromiseAffE4 _keyboardType
 
 -- | Dispatches a keyup event.
 keyboardUp :: forall options trash
@@ -305,11 +317,11 @@ foreign import _content :: FU.Fn1 Page (Effect (Promise String))
 foreign import _screenshot :: forall options. FU.Fn2 options Page (Effect (Promise Buffer))
 foreign import _pdf :: forall options. FU.Fn2 options Page (Effect (Promise Buffer))
 foreign import _on :: forall a. EU.EffectFn3 String (EU.EffectFn1 a Unit) Page Unit
-foreign import _pageWaitForSelector :: forall options. FU.Fn3 Selector options Page (Effect (Promise ElementHandle))
+foreign import _waitForSelector :: forall options page. FU.Fn3 Selector options page (Effect (Promise ElementHandle))
 foreign import _select :: forall options. FU.Fn3 Selector options Page (Effect (Promise Unit))
-foreign import _focus :: FU.Fn2 Selector Page (Effect (Promise Unit))
+foreign import _focus :: forall page. FU.Fn2 Selector page (Effect (Promise Unit))
 foreign import _type :: forall options. FU.Fn4 Selector String options Page (Effect (Promise Unit))
-foreign import _click :: FU.Fn2 Selector Page (Effect (Promise Unit))
+foreign import _click :: forall page. FU.Fn2 Selector page (Effect (Promise Unit))
 foreign import _waitForNavigation :: forall options. FU.Fn2 options Page (Effect (Promise Unit))
 foreign import _getLocationHref :: FU.Fn1 Page (Effect (Promise String))
 foreign import _unsafeEvaluateOnNewDocument :: FU.Fn2 String Page (Effect (Promise Foreign))
@@ -319,7 +331,8 @@ foreign import _unsafePageEvalAll :: FU.Fn3 Selector String Page (Effect (Promis
 foreign import _keyboardDown :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
 foreign import _keyboardPress :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
 foreign import _keyboardSendCharacter :: FU.Fn2 String Page (Effect (Promise Unit))
-foreign import _keyboardType :: forall options. FU.Fn3 String options Page (Effect (Promise Unit))
+foreign import _keyboardType :: forall options page. FU.Fn4 Selector String options page (Effect (Promise Unit))
 foreign import _keyboardUp :: forall options. FU.Fn3 KeyboardKey options Page (Effect (Promise Unit))
 foreign import _setUserAgent :: FU.Fn2 String Page (Effect (Promise Unit))
 foreign import _bringToFront :: FU.Fn1 Page (Effect (Promise Unit))
+foreign import _contentFrame :: FU.Fn1 ElementHandle (Effect (Promise Frame))

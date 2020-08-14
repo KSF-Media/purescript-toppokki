@@ -48,7 +48,7 @@ exports._on = function(event, callback, page) {
   return page.on(event, callback);
 };
 
-exports._pageWaitForSelector = function(selector, options, page) {
+exports._waitForSelector = function(selector, options, page) {
   return function() {
     return page.waitForSelector(selector, options);
   };
@@ -77,6 +77,12 @@ exports._click = function(selector, page) {
     return page.click(selector);
   };
 };
+
+exports._contentFrame = function(elementHandle) {
+  return function() {
+    return elementHandle.contentFrame();
+  }
+}
 
 exports._waitForNavigation = function(options, page) {
   return function() {
@@ -134,9 +140,9 @@ exports._keyboardSendCharacter = function(char, page) {
   };
 };
 
-exports._keyboardType = function(text, options, page) {
+exports._keyboardType = function(selector, text, options, page) {
   return function() {
-    return page.keyboard.type(text, options);
+    return page.type(selector, text, options);
   };
 };
 
