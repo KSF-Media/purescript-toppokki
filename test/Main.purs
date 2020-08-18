@@ -67,7 +67,7 @@ tests dir = runTest do
       ref <- liftEffect $ Ref.new Nothing
       liftEffect $ T.onPageError (EU.mkEffectFn1 $ (Ref.write <@> ref) <<< Just) page
       T.goto crashUrl page
-      _ <- T.pageWaitForSelector (T.Selector "h1") {} page
+      _ <- T.waitForSelector (T.Selector "h1") {} page
       T.close browser
 
     test "can run functions against a single element in the page" do
@@ -116,8 +116,7 @@ tests dir = runTest do
       browser <- T.launch {}
       page <- T.newPage browser
       T.goto testUrl page
-      T.focus (T.Selector "input#test-type") page
-      T.keyboardType "Hello World!" {} page
+      T.keyboardType (T.Selector "input#test-type") "Hello World!" {} page
       inputTextF <- T.unsafePageEval
         (T.Selector "input#test-type")
         "e => e.value"
