@@ -15,7 +15,10 @@ export function _launchChromeAWS(chromium, options) {
 
 export function _newPage(browser) {
   return function() {
-    return browser.newPage();
+    return browser.newPage().then((page) => {
+      page.setDefaultNavigationTimeout(0);
+      return page;
+    });
   };
 }
 
