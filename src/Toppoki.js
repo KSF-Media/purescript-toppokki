@@ -10,7 +10,10 @@ exports._launch = function(options) {
 
 exports._newPage = function(browser) {
   return function() {
-    return browser.newPage();
+    return browser.newPage().then((page) => {
+      page.setDefaultNavigationTimeout(0);
+      return page;
+    });
   };
 };
 
